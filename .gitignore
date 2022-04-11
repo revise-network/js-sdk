@@ -122,3 +122,5 @@ dist
 
 # mac filesystem
 .DS_Store
+
+dist/
