@@ -1,6 +1,6 @@
 {
   "name": "revise-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Revise is a protocol that enables building dynamic NFTs. It helps connect NFTs to real-world events and make them interactive. Revise sdk is like a Backend as a service for NFTs.",
   "main": "./src/index.ts",
   "scripts": {
