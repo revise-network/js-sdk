@@ -2,9 +2,9 @@
   "name": "revise-sdk",
   "version": "0.1.0",
   "description": "Revise is a protocol that enables building dynamic NFTs. It helps connect NFTs to real-world events and make them interactive. Revise sdk is like a Backend as a service for NFTs.",
-  "main": "index.js",
+  "main": "./src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ts-node -r tsconfig-paths/register --transpile-only src/test.ts"
   },
   "repository": {
     "type": "git",
@@ -22,5 +22,16 @@
   "bugs": {
     "url": "https://github.com/anildukkipatty/revise/issues"
   },
-  "homepage": "https://docs.revise.network"
+  "homepage": "https://docs.revise.network",
+  "devDependencies": {
+    "nodemon": "^2.0.9",
+    "ts-jest": "^27.0.3",
+    "ts-node": "^10.0.0",
+    "tsc-alias": "^1.4.1",
+    "tsconfig-paths": "^3.10.1",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "axios": "^0.26.1"
+  }
 }
