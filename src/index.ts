@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Collection, NFT, NFTRevision } from './types';
 
-const BASE_URL = "https://api.revise.link";
+const BASE_URL = "https://api.revise.network";
 function getHeaders({ token }) {
   return {
     headers: {
@@ -35,18 +35,19 @@ const addCollectionAPI = async ({ token, info }) => {
   );
   return data as Collection;
 };
-const addNFTAPI = async ({ token, collectionId, info }) => {
-  const { data } = await axios.post(
-    `${BASE_URL}/collections/${collectionId}/nfts`,
-    {
-      tokenId: info.tokenId,
-      name: info.name,
-      image: info.image,
-      description: info.description,
-      metaData: info.metaData,
-    },
-    getHeaders({ token })
-  );
+const addNFTAPI = async ({ token, collectionId, info }: {token: any, collectionId?: string, info: any}) => {
+  const tokenObj = {
+    tokenId: info.tokenId,
+    name: info.name,
+    image: info.image,
+    description: info.description,
+    metaData: info.metaData,
+  };
+  if (collectionId) {
+    const { data } = await axios.post(`${BASE_URL}/collections/${collectionId}/nfts`, tokenObj, getHeaders({ token }));
+    return data as NFT;
+  }
+  const { data } = await axios.post(`${BASE_URL}/nfts/addnft`, tokenObj, getHeaders({ token }));
   return data as NFT;
 };
 const updateNFTAPI = async ({ token, nftId, info }) => {
@@ -63,9 +64,27 @@ const updateNFTAPI = async ({ token, nftId, info }) => {
   );
   return data;
 };
-const fetchNFTsAPI = async ({ token, collectionId }) => {
+const fetchCollectionNFTsAPI = async ({ token, collectionId }) => {
   const { data } = await axios.get(
     `${BASE_URL}/collections/${collectionId}/nfts`,
+    getHeaders({ token })
+  );
+  return data.map((nft: NFT) => {
+    try {
+      const nftEntity: NFTEntity = {...nft, metaData: JSON.parse(nft.metaData)};
+      if (nftEntity.id) {
+        return {...nftEntity, message: 'ID exists'}
+      }
+      return nftEntity;
+    } catch (error) {
+      const nftEntity: NFTEntity = {...nft, metaData: []};
+      return nftEntity;
+    }
+  }) as NFTEntity[];
+};
+const fetchNFTsAPI = async ({ token, collectionId }) => {
+  const { data } = await axios.get(
+    `${BASE_URL}/nfts`,
     getHeaders({ token })
   );
   return data.map((nft: NFT) => {
@@ -245,21 +264,31 @@ export class Revise {
   addCollection({name, uri}) {
     return addCollectionAPI({token: this.auth, info: {name, uri}})
   }
-  addNFT(collectionId: string, tokenData: TokenDataPartial, properties: Attribute[]) {
+  addNFT(tokenData: TokenDataPartial, properties: Attribute[], collectionId?: string) {
     const {tokenId, name, image, description} = tokenData
-    return addNFTAPI({token: this.auth, collectionId, info: {
+    const info = {
       tokenId,
       name,
       image,
       description: description || "",
       metaData: properties
-    }})
+    };
+    if (collectionId) {
+      return addNFTAPI({token: this.auth, collectionId, info})
+    }
+    return addNFTAPI({token: this.auth, info})
+  }
+  async updateNFT(nftId: string) {
+    return this.nft(await this.fetchNFT(nftId));
   }
   nft(nft: NFTEntity) {
     return new NFTObj({auth: this.auth, nft});
   }
-  fetchNFTs(collectionId: string) {
-    return fetchNFTsAPI({token: this.auth, collectionId});
+  fetchNFTs(collectionId?: string) {
+    if (collectionId === undefined || collectionId === null) {
+      return fetchNFTsAPI({token: this.auth, collectionId});
+    }
+    return fetchCollectionNFTsAPI({token: this.auth, collectionId});
   }
   fetchNFT(nftId: string) {
     return fetchNFTAPI({token: this.auth, nftId});
@@ -271,7 +300,67 @@ export class Revise {
     return fetchRevisionsAPI({token: this.auth, nftId});
   }
 
+  every(durationString: string) {
+    return new Automation(new Duration(durationString));
+  }
   // exportCollection(collectionId: string) {
   //   return "ipfs://...";
   // }
+}
+
+class Automation {
+  private apiResolver: Function;
+  private duration: Duration;
+
+  constructor(duration: Duration) {
+    this.duration = duration;
+  }
+  public listenTo(api: string | Function) {
+    if (typeof api !== 'string' && typeof api !== 'function') {
+      throw new Error('invalid API source shared');
+    }
+    if (typeof api === 'string') {
+      this.apiResolver = async () => (await axios.get(api)).data;
+    }
+    if (typeof api === 'function') {
+      this.apiResolver = api;
+    }
+    return this;
+  }
+  public async start(cb: Function) {
+    const data = await this.apiResolver();
+    cb(data);
+    setTimeout(() => {
+      this.start(cb);
+    }, this.duration.getMiliseconds());
+  }
+}
+
+class Duration {
+  private durationString: string;
+  private miliseconds: number;
+  
+  constructor(durationString: string) {
+    this.durationString = durationString;
+  }
+  public getMiliseconds() {
+    try {
+      if (this.durationString.toLowerCase().includes('s')) {
+        const data = this.durationString.toLowerCase().split('m')[0];
+        return parseInt(data)*1000;
+      }
+      if (this.durationString.toLowerCase().includes('m')) {
+        const data = this.durationString.toLowerCase().split('m')[0];
+        return parseInt(data)*60000;
+      }
+      if (this.durationString.toLowerCase().includes('h')) {
+        const data = this.durationString.toLowerCase().split('m')[0];
+        return parseInt(data)*3600000;
+      }
+      
+    } catch (error) {
+      throw new Error("Invalid time format passed");
+      
+    }
+  }
 }
