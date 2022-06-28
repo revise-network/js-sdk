@@ -121,3 +121,5 @@ out
 
 # mac filesystem
 .DS_Store
+
+dist/
