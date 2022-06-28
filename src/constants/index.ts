@@ -1,5 +1,6 @@
 const URLS = {
   BASE_URL: "https://api.revise.network",
+  DOCS_URL: "https://docs.revise.network",
 };
 
 const ERRORS = {
@@ -10,10 +11,9 @@ const ERRORS = {
       description:
         'Initialize the token => new Revise({ auth: "YOUR_AUTH_TOKEN"  });',
     },
-    NOT_FOUND: "Token not found",
+    NOT_FOUND: { statusCode: 401, message: "Token not found" },
   },
   TRY_AGAIN: { code: "500", message: "Something Went Wrong!! Try Again" },
-  UN_AUTH: "Token not valid!!",
   ENOTFOUND: {
     code: "500",
     message: "Server Error",

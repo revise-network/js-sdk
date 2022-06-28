@@ -13,7 +13,7 @@ const getHeaders = ({ token }: { token: string }) => {
         Authorization: `Bearer ${token}`,
       },
     };
-  else throw { statusCode: 401, message: ERRORS.TOKEN.NOT_FOUND };
+  else throw { code: 401 };
 };
 
 //Create Custom Error Messages
@@ -23,6 +23,7 @@ const generateError = (error) => {
   const err: errorObject = {
     ...ERRORS[status],
     code: Number(ERRORS[status].code),
+    docs: URLS.DOCS_URL,
   };
   return err;
 };
@@ -255,7 +256,8 @@ const deleteNFTAPI = async ({ token, tokenId }) => {
 interface errorObject {
   code: number;
   message: string;
-  description: string;
+  description?: string;
+  docs: string;
 }
 export interface TokenDataPartial {
   name: string;
@@ -384,7 +386,10 @@ class NFTObj {
 export class Revise {
   private auth: string | undefined;
   constructor(values: { auth: string }) {
-    if (!values) throw ERRORS.TOKEN.NOT_INITIALIZED;
+    if (!values) {
+      console.log(ERRORS.TOKEN.NOT_INITIALIZED);
+      process.exit(1);
+    }
     const { auth } = values;
     this.auth = auth;
   }
@@ -492,6 +497,7 @@ export class Revise {
       throw { ...error };
     }
   };
+
   // exportCollection(collectionId: string) {
   //   return "ipfs://...";
   // }
