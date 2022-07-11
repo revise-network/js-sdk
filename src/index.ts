@@ -265,6 +265,12 @@ export interface TokenDataPartial {
   tokenId: string;
   description?: string;
 }
+
+export interface paginationConfig {
+  perPage: number;
+  currentPage: number;
+}
+
 export type Attribute = { [keys in string]: string | number };
 
 export interface RevisionList extends Omit<NFT, "metaData"> {
@@ -372,13 +378,14 @@ class NFTObj {
   // export() {
   //   return "ipfs://...";
   // }
+
   async revisions() {
     return (await fetchRevisionsAPI({ token: this.auth, nftId: this.nft.id }))
       .revisions;
   }
 
   async revisionsLink() {
-    return `https://revise.link/revision/${this.nft.id}`;
+    return `${URLS.REVISE_URL}/revision/${this.nft.id}`;
   }
 }
 
@@ -394,9 +401,14 @@ export class Revise {
     this.auth = auth;
   }
 
-  fetchCollections = async () => {
+  fetchCollections = async (config: paginationConfig) => {
     try {
-      return await fetchCollectionsAPI({ token: this.auth });
+      const { perPage, currentPage } = config;
+      return await fetchCollectionsAPI({
+        token: this.auth,
+        perPage,
+        currentPageNumber: currentPage,
+      });
     } catch (error) {
       throw { ...error };
     }
@@ -456,11 +468,17 @@ export class Revise {
     }
   };
 
-  fetchNFTs = async (collectionId?: string) => {
+  fetchNFTs = async (collectionId?: string, config?: paginationConfig) => {
     try {
+      const { perPage, currentPage } = config;
       if (collectionId)
         return await fetchCollectionNFTsAPI({ token: this.auth, collectionId });
-      else return await fetchNFTsAPI({ token: this.auth });
+      else
+        return await fetchNFTsAPI({
+          token: this.auth,
+          perPage,
+          currentPageNumber: currentPage,
+        });
     } catch (error) {
       throw { ...error };
     }

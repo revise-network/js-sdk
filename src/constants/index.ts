@@ -1,6 +1,7 @@
 const URLS = {
   BASE_URL: "https://api.revise.network",
   DOCS_URL: "https://docs.revise.network",
+  REVISE_URL: "https://revise.link"
 };
 
 const ERRORS = {
