@@ -468,9 +468,15 @@ export class Revise {
     }
   };
 
-  fetchNFTs = async (collectionId?: string, config?: paginationConfig) => {
+  fetchNFTs = async ({
+    collectionId = undefined,
+    config,
+  }: {
+    collectionId?: string;
+    config?: paginationConfig;
+  }) => {
     try {
-      const { perPage, currentPage } = config;
+      const { perPage, currentPage } = config || {};
       if (collectionId)
         return await fetchCollectionNFTsAPI({ token: this.auth, collectionId });
       else
