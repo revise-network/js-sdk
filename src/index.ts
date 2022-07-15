@@ -476,7 +476,10 @@ export class Revise {
     config?: paginationConfig;
   }) => {
     try {
-      const { perPage, currentPage } = config || {};
+      const {
+        perPage,
+        currentPage
+      } = config || {};
       if (collectionId)
         return await fetchCollectionNFTsAPI({ token: this.auth, collectionId });
       else
