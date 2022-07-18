@@ -83,7 +83,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -123,4 +122,4 @@ dist
 # mac filesystem
 .DS_Store
 
-dist/
+dist
