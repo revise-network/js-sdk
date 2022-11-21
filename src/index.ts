@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { Collection, NFT, NFTRevision } from './types';
+import { Collection, NFT, NFTRevision, ReviseConfig } from './types';
 
-const BASE_URL = "https://api.revise.network";
+let BASE_URL = "https://api.revise.network";
 function getHeaders({ token }) {
   return {
     headers: {
@@ -249,10 +249,14 @@ class NFTObj {
   }
 }
 
+
 export class Revise {
   private auth: string|undefined;
-  constructor({auth}: {auth: string}) {
+  constructor({auth, serverURL}: ReviseConfig) {
     this.auth = auth;
+    if (serverURL !== undefined) {
+      BASE_URL = serverURL;
+    }
   }
 
   fetchCollections() {

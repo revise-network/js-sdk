@@ -69,3 +69,12 @@ export type NFTRevision = {
   createdAt: Date
   updatedAt: Date
 }
+
+/**
+ * Revise config
+ * 
+ */
+export type ReviseConfig = {
+  auth: string,
+  serverURL?: string,
+}
