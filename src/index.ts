@@ -10,9 +10,10 @@ function getHeaders({ token }) {
   };
 }
 
-const fetchCollectionsAPI = async ({ token }) => {
+const fetchCollectionsAPI = async ({ token }, config?: QueryConfig) => {
+  let queryString = generateQueryString(config);
   const { data } = await axios.get(
-    `${BASE_URL}/collections`,
+    `${BASE_URL}/collections?${queryString}`,
     getHeaders({ token })
   );
   return data as Collection[];
@@ -64,9 +65,10 @@ const updateNFTAPI = async ({ token, nftId, info }) => {
   );
   return data;
 };
-const fetchCollectionNFTsAPI = async ({ token, collectionId }) => {
+const fetchCollectionNFTsAPI = async ({ token, collectionId }, config?: QueryConfig) => {
+  let queryString = generateQueryString(config);
   const { data } = await axios.get(
-    `${BASE_URL}/collections/${collectionId}/nfts`,
+    `${BASE_URL}/collections/${collectionId}/nfts?${queryString}`,
     getHeaders({ token })
   );
   return data.map((nft: NFT) => {
@@ -82,9 +84,10 @@ const fetchCollectionNFTsAPI = async ({ token, collectionId }) => {
     }
   }) as NFTEntity[];
 };
-const fetchNFTsAPI = async ({ token, collectionId }) => {
+const fetchNFTsAPI = async ({ token, collectionId }, config?: QueryConfig) => {
+  let queryString = generateQueryString(config);
   const { data } = await axios.get(
-    `${BASE_URL}/nfts`,
+    `${BASE_URL}/nfts?${queryString}`,
     getHeaders({ token })
   );
   return data.map((nft: NFT) => {
@@ -112,9 +115,10 @@ const fetchNFTAPI = async ({ token, nftId }) => {
   }
   return data as NFTEntity;
 };
-const fetchRevisionsAPI = async ({ token, nftId }) => {
+const fetchRevisionsAPI = async ({ token, nftId }, config? : QueryConfig) => {
+  let queryString = generateQueryString(config);
   const { data } = await axios.get(
-    `${BASE_URL}/nfts/${nftId}/revisions`,
+    `${BASE_URL}/nfts/${nftId}/revisions?${queryString}`,
     getHeaders({ token })
   );
   try {
@@ -250,6 +254,7 @@ class NFTObj {
 }
 
 
+type QueryConfig = {page?: number, pageSize?: number}
 export class Revise {
   private auth: string|undefined;
   constructor({auth, serverURL}: ReviseConfig) {
@@ -258,9 +263,8 @@ export class Revise {
       BASE_URL = serverURL;
     }
   }
-
-  fetchCollections() {
-    return fetchCollectionsAPI({token: this.auth})
+  fetchCollections(config?: QueryConfig) {
+    return fetchCollectionsAPI({token: this.auth}, config)
   }
   fetchCollection(collectionId) {
     return fetchCollectionAPI({token: this.auth, collectionId})
@@ -367,4 +371,15 @@ class Duration {
       
     }
   }
+}
+
+function generateQueryString(config: QueryConfig) {
+  let queryString = '';
+  if (config.page !== undefined) {
+    queryString += `page=${config.page}&`;
+  }
+  if (config.pageSize !== undefined) {
+    queryString += `pageSize=${config.pageSize}`;
+  }
+  return queryString;
 }
