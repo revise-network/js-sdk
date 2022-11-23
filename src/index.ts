@@ -71,7 +71,8 @@ const fetchCollectionNFTsAPI = async ({ token, collectionId }, config?: QueryCon
     `${BASE_URL}/collections/${collectionId}/nfts?${queryString}`,
     getHeaders({ token })
   );
-  return data.map((nft: NFT) => {
+
+  const nfts = data.data.map((nft: NFT) => {
     try {
       const nftEntity: NFTEntity = {...nft, metaData: JSON.parse(nft.metaData)};
       if (nftEntity.id) {
@@ -83,6 +84,7 @@ const fetchCollectionNFTsAPI = async ({ token, collectionId }, config?: QueryCon
       return nftEntity;
     }
   }) as NFTEntity[];
+  return {...data, data: nfts}
 };
 const fetchNFTsAPI = async ({ token, collectionId }, config?: QueryConfig) => {
   let queryString = generateQueryString(config);
@@ -90,7 +92,7 @@ const fetchNFTsAPI = async ({ token, collectionId }, config?: QueryConfig) => {
     `${BASE_URL}/nfts?${queryString}`,
     getHeaders({ token })
   );
-  return data.map((nft: NFT) => {
+  const nfts = data.data.map((nft: NFT) => {
     try {
       const nftEntity: NFTEntity = {...nft, metaData: JSON.parse(nft.metaData)};
       if (nftEntity.id) {
@@ -102,6 +104,7 @@ const fetchNFTsAPI = async ({ token, collectionId }, config?: QueryConfig) => {
       return nftEntity;
     }
   }) as NFTEntity[];
+  return {...data, data: nfts}
 };
 const fetchNFTAPI = async ({ token, nftId }) => {
   const { data } = await axios.get(
@@ -117,13 +120,14 @@ const fetchNFTAPI = async ({ token, nftId }) => {
 };
 const fetchRevisionsAPI = async ({ token, nftId }, config? : QueryConfig) => {
   let queryString = generateQueryString(config);
-  const { data } = await axios.get(
+  const { data: responseData } = await axios.get(
     `${BASE_URL}/nfts/${nftId}/revisions?${queryString}`,
     getHeaders({ token })
   );
+  // const data = responseData.data
   try {
-    data.metaData = JSON.parse(data.metaData);
-    data.revisions = data.revisions.map(rev => {
+    // data.metaData = JSON.parse(data.metaData);
+    const data = responseData.data.map(rev => {
       try {
         rev.metaData = JSON.parse(rev.metaData);
       } catch (error) {
@@ -131,7 +135,7 @@ const fetchRevisionsAPI = async ({ token, nftId }, config? : QueryConfig) => {
       }
       return rev;
     });
-    return data as RevisionList;
+    return {...responseData, data} as RevisionList;
   } catch (error) {
     throw {
       response: { data: { code: "INVMD", message: "Invalid metadata" } },
@@ -245,8 +249,8 @@ class NFTObj {
   // export() {
   //   return "ipfs://...";
   // }
-  async revisions() {
-    return (await fetchRevisionsAPI({token: this.auth, nftId: this.nft.id})).revisions;
+  async revisions(config? : QueryConfig) {
+    return (await fetchRevisionsAPI({token: this.auth, nftId: this.nft.id}, config));
   }
   async revisionsLink() {
     return `https://revise.link/revision/${this.nft.id}`;
@@ -255,6 +259,7 @@ class NFTObj {
 
 
 type QueryConfig = {page?: number, pageSize?: number}
+
 export class Revise {
   private auth: string|undefined;
   constructor({auth, serverURL}: ReviseConfig) {
@@ -292,11 +297,12 @@ export class Revise {
   nft(nft: NFTEntity) {
     return new NFTObj({auth: this.auth, nft});
   }
-  fetchNFTs(collectionId?: string) {
+  
+  fetchNFTs(collectionId?: string, config? : QueryConfig) {
     if (collectionId === undefined || collectionId === null) {
-      return fetchNFTsAPI({token: this.auth, collectionId});
+      return fetchNFTsAPI({token: this.auth, collectionId}, config);
     }
-    return fetchCollectionNFTsAPI({token: this.auth, collectionId});
+    return fetchCollectionNFTsAPI({token: this.auth, collectionId}, config);
   }
   fetchNFT(nftId: string) {
     return fetchNFTAPI({token: this.auth, nftId});
@@ -304,8 +310,8 @@ export class Revise {
   deleteNFT(nftId: string) {
     return deleteNFTAPI({token: this.auth, tokenId: nftId});
   }
-  fetchRevisions(nftId: string) {
-    return fetchRevisionsAPI({token: this.auth, nftId});
+  fetchRevisions(nftId: string, config? : QueryConfig) {
+    return fetchRevisionsAPI({token: this.auth, nftId}, config);
   }
 
   every(durationString: string) {
@@ -375,11 +381,14 @@ class Duration {
 
 function generateQueryString(config: QueryConfig) {
   let queryString = '';
+  if (config === undefined) {
+    return queryString;
+  }
   if (config.page !== undefined) {
-    queryString += `page=${config.page}&`;
+    queryString += `pageNumber=${config.page}&`;
   }
   if (config.pageSize !== undefined) {
-    queryString += `pageSize=${config.pageSize}`;
+    queryString += `perPage=${config.pageSize}`;
   }
   return queryString;
 }
